@@ -1,0 +1,188 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Player {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  colonies  Colony[]
+  achievements PlayerAchievement[]
+}
+
+model Colony {
+  id          String   @id @default(cuid())
+  name        String
+  level       Int      @default(1)
+  experience  Int      @default(0)
+  evolutionStage String @default("PRIMITIVE") // PRIMITIVE, TRIBAL, KINGDOM, EMPIRE, SUPER_INTELLIGENT
+  playerId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  player      Player   @relation(fields: [playerId], references: [id])
+  chambers    Chamber[]
+  ants        Ant[]
+  resources   Resource[]
+  technologies Technology[]
+  tasks       Task[]
+  stats       ColonyStats?
+  events      GameEvent[]
+}
+
+model Chamber {
+  id          String      @id @default(cuid())
+  type        String      // ENTRANCE, DEFENSE, STORAGE, NURSERY, QUEEN_PALACE, REST_AREA, RESOURCE_PROCESSING, SECRET_PASSAGE, FUNGUS_GARDEN
+  level       Int         @default(1)
+  layer       Int         // 0=surface, 1=upper, 2=middle, 3=deep
+  capacity    Int         @default(100)
+  efficiency  Float       @default(1.0)
+  colonyId    String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  colony      Colony      @relation(fields: [colonyId], references: [id])
+}
+
+model Ant {
+  id          String   @id @default(cuid())
+  type        String   // WORKER, SOLDIER, QUEEN, SCOUT, BUILDER
+  level       Int      @default(1)
+  experience  Int      @default(0)
+  health      Int      @default(100)
+  energy      Int      @default(100)
+  efficiency  Float    @default(1.0)
+  specialSkill String? // 特殊技能
+  workingAt   String?  // 当前工作的房间ID
+  status      String   @default("IDLE") // IDLE, WORKING, RESTING, EXPLORING
+  colonyId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  colony      Colony   @relation(fields: [colonyId], references: [id])
+}
+
+model Resource {
+  id          String       @id @default(cuid())
+  type        String       // FOOD, WATER, MINERAL, HONEYDEW, FUNGUS
+  amount      Int          @default(0)
+  capacity    Int          @default(1000)
+  colonyId    String
+  updatedAt   DateTime     @updatedAt
+  
+  colony      Colony       @relation(fields: [colonyId], references: [id])
+}
+
+model Technology {
+  id          String         @id @default(cuid())
+  type        String         // COLLECTION, MILITARY, CONSTRUCTION, BIOLOGY
+  name        String         // 科技名称
+  level       Int            @default(0)
+  maxLevel    Int            @default(10)
+  researchCost Int           @default(100)
+  description String
+  effects     String         // JSON格式存储效果
+  prerequisites String?      // 前置科技要求
+  colonyId    String
+  unlockedAt  DateTime       @default(now())
+  
+  colony      Colony         @relation(fields: [colonyId], references: [id])
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  type        String     // DAILY, WEEKLY, MAIN_STORY
+  title       String
+  description String
+  reward      String
+  progress    Int        @default(0)
+  target      Int
+  completed   Boolean    @default(false)
+  colonyId    String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  colony      Colony     @relation(fields: [colonyId], references: [id])
+}
+
+model Achievement {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String
+  icon        String
+  reward      String
+  
+  players     PlayerAchievement[]
+}
+
+model PlayerAchievement {
+  id            String      @id @default(cuid())
+  playerId      String
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+  
+  player        Player      @relation(fields: [playerId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  
+  @@unique([playerId, achievementId])
+}
+
+// 交易市场
+model MarketItem {
+  id          String   @id @default(cuid())
+  resourceType String
+  quantity    Int
+  price       Int      // 以食物为基础货币
+  sellerId    String   // 玩家ID
+  buyerId     String?  // 购买者ID
+  status      String   @default("AVAILABLE") // AVAILABLE, SOLD, EXPIRED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// 蚂蚁进化路径
+model AntEvolution {
+  id          String @id @default(cuid())
+  fromType    String // 进化前类型
+  toType      String // 进化后类型
+  requirements String // JSON格式存储进化要求
+  benefits    String // JSON格式存储进化收益
+}
+
+// 殖民地统计
+model ColonyStats {
+  id              String   @id @default(cuid())
+  colonyId        String   @unique
+  totalAnts       Int      @default(0)
+  totalResources  Int      @default(0)
+  defenseRating   Int      @default(0)
+  productionRate  Float    @default(1.0)
+  explorationArea Int      @default(1)
+  lastUpdated     DateTime @default(now())
+  
+  colony          Colony   @relation(fields: [colonyId], references: [id])
+}
+
+// 事件日志
+model GameEvent {
+  id          String   @id @default(cuid())
+  colonyId    String
+  type        String   // RESOURCE_FOUND, ENEMY_ATTACK, TECH_UNLOCKED, etc.
+  title       String
+  description String
+  impact      String?  // JSON格式存储事件影响
+  createdAt   DateTime @default(now())
+  
+  colony      Colony   @relation(fields: [colonyId], references: [id])
+}
