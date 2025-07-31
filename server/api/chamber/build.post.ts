@@ -4,22 +4,20 @@ const prisma = new PrismaClient()
 
 // 房间类型配置
 const CHAMBER_CONFIGS = {
-  // 地表层 (layer 0)
-  ENTRANCE: { layer: 0, baseCost: { mineral: 50 }, baseCapacity: 50, description: '巢穴入口，控制进出' },
-  DEFENSE: { layer: 0, baseCost: { mineral: 100, food: 50 }, baseCapacity: 100, description: '防御工事，抵御入侵' },
+  // 核心层 (layer -1) - 只能建蚁后宫殿
+  QUEEN_PALACE: { layer: -1, baseCost: { mineral: 200, honeydew: 100 }, baseCapacity: 300, description: '蚁后宫殿，提升繁殖效率' },
   
-  // 上层 (layer 1)
+  // 浅层 (layer 0) - 只能建真菌园
+  FUNGUS_GARDEN: { layer: 0, baseCost: { water: 100, mineral: 80 }, baseCapacity: 160, description: '真菌园，培养特殊资源' },
+  
+  // 第1层 (layer 1) - 只能建储藏室
   STORAGE: { layer: 1, baseCost: { mineral: 80, food: 30 }, baseCapacity: 200, description: '储藏室，存储资源' },
-  NURSERY: { layer: 1, baseCost: { food: 100, water: 50 }, baseCapacity: 150, description: '育婴室，培育幼虫' },
   
-  // 中层 (layer 2)
-  QUEEN_PALACE: { layer: 2, baseCost: { mineral: 200, honeydew: 100 }, baseCapacity: 300, description: '蚁后宫殿，提升繁殖效率' },
-  REST_AREA: { layer: 2, baseCost: { mineral: 60, food: 40 }, baseCapacity: 120, description: '休息区，恢复蚂蚁体力' },
+  // 中层 (layer 2) - 只能建资源加工室
+  RESOURCE_PROCESSING: { layer: 2, baseCost: { mineral: 150, fungus: 80 }, baseCapacity: 180, description: '资源加工室，转换资源' },
   
-  // 深层 (layer 3)
-  RESOURCE_PROCESSING: { layer: 3, baseCost: { mineral: 150, fungus: 80 }, baseCapacity: 180, description: '资源加工室，转换资源' },
-  SECRET_PASSAGE: { layer: 3, baseCost: { mineral: 120 }, baseCapacity: 80, description: '秘密通道，快速移动' },
-  FUNGUS_GARDEN: { layer: 3, baseCost: { water: 100, mineral: 80 }, baseCapacity: 160, description: '真菌园，培养特殊资源' }
+  // 深层 (layer 3) - 只能建育婴室
+  NURSERY: { layer: 3, baseCost: { food: 100, water: 50 }, baseCapacity: 150, description: '育婴室，培育幼虫' }
 }
 
 export default defineEventHandler(async (event) => {

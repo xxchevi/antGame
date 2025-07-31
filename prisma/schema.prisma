@@ -13,7 +13,9 @@ datasource db {
 model Player {
   id        String   @id @default(cuid())
   username  String   @unique
-  email     String   @unique
+  password  String
+  nickname  String
+  email     String?  @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
@@ -48,6 +50,10 @@ model Chamber {
   layer       Int         // 0=surface, 1=upper, 2=middle, 3=deep
   capacity    Int         @default(100)
   efficiency  Float       @default(1.0)
+  maxLevel    Int         @default(10)
+  upgradeCost String?     // JSON格式存储升级成本
+  specialBonus String?    // JSON格式存储特殊加成
+  isUnique    Boolean     @default(false) // 是否唯一建筑（如蚁后宫殿）
   colonyId    String
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -65,7 +71,7 @@ model Ant {
   efficiency  Float    @default(1.0)
   specialSkill String? // 特殊技能
   workingAt   String?  // 当前工作的房间ID
-  status      String   @default("IDLE") // IDLE, WORKING, RESTING, EXPLORING
+  status      String   @default("IDLE") // IDLE, WORKING, RESTING, EXPLORING, EGG
   colonyId    String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

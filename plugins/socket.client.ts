@@ -45,6 +45,19 @@ export default defineNuxtPlugin(() => {
             isConnected.value = false
           })
           
+          // 监听资源生产事件
+          socket.on('resource_production', (data) => {
+            console.log('📦 收到资源生产事件:', data)
+            // 这里可以更新前端的资源显示
+            // 触发资源更新事件
+            if (window.gameEventBus) {
+              window.gameEventBus.emit('resourceUpdate', data)
+            }
+          })
+          
+          // 启动自动化处理定时器
+          startAutomationTimer()
+          
           // 尝试连接
           socket.connect()
           break
@@ -206,6 +219,41 @@ export default defineNuxtPlugin(() => {
     }
   }
   
+  // 自动化处理定时器
+  function startAutomationTimer() {
+    if (process.client) {
+      setInterval(async () => {
+        try {
+          // 检查是否有登录状态
+          const playerInfo = localStorage.getItem('playerInfo')
+          if (!playerInfo) return
+          
+          const player = JSON.parse(playerInfo)
+          if (!player.colonyId) return
+          
+          // 调用自动化处理API
+          const response = await $fetch('/api/automation/process', {
+            method: 'POST',
+            body: {
+              action: 'auto_process',
+              colonyId: player.colonyId
+            }
+          })
+          
+          if (response.success && response.data) {
+            // 触发游戏数据更新事件
+            if (window.gameEventBus) {
+              window.gameEventBus.emit('automationUpdate', response.data)
+            }
+          }
+        } catch (error) {
+          // 静默处理错误，避免干扰用户体验
+          console.debug('自动化处理错误:', error)
+        }
+      }, 5000) // 每5秒执行一次
+    }
+  }
+
   // 提供给应用使用
   return {
     provide: {
